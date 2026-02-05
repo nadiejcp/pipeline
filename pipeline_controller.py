@@ -29,9 +29,27 @@ class PipelineController:
     self.model_factory = ModelFactory(config["models"])
     self.artifact_manager = ArtifactManager(config["output"])
 
-  def run(self):
-    df = self.data_loader.load()
+  def load_processed_data(self, force_rebuild: bool = False):
+    processed_exists = (
+        TRAIN_PATH.exists() and
+        VAL_PATH.exists() and
+        TEST_PATH.exists() and
+        PREP_PATH.exists()
+    )
+    if not force_rebuild and processed_exists:
+      print("Loading processed data...")
 
+      X_train, y_train = joblib.load(TRAIN_PATH)
+      X_val, y_val     = joblib.load(VAL_PATH)
+      X_test, y_test   = joblib.load(TEST_PATH)
+
+      self.preprocessor = joblib.load(PREP_PATH)
+      self.feature_engineer = joblib.load(FE_PATH)
+
+      return X_train, X_val, X_test, y_train, y_val, y_test
+
+    print("Loading raw data...")
+    df = self.data_loader.load()
     X_train, X_val, X_test, y_train, y_val, y_test = self.data_loader.split(df)
 
     X_train = self.feature_engineer.transform(X_train)
@@ -50,9 +68,12 @@ class PipelineController:
     joblib.dump((X_val, y_val), "data/processed/val.joblib")
     joblib.dump((X_test, y_test), "data/processed/test.joblib")
 
-    results = {}
+    return X_train, X_val, X_test, y_train, y_val, y_test
 
-    # 5. Train & evaluate each model
+  def run(self, force_rebuild: bool = False):
+    X_train, X_val, X_test, y_train, y_val, y_test = self.load_processed_data(force_rebuild)
+    print("Training models...")
+    results = {}
     for model_name in self.model_factory.list_models():
       model = self.model_factory.create(model_name)
 
