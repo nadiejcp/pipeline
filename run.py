@@ -1,8 +1,8 @@
 # run.py
 
-from pipeline.pipeline_controller import PipelineController
-from pipeline.config.load_config import load_config
-from pipeline.utils.seed import set_global_seed
+from pipeline_controller import PipelineController
+from config.load_config import load_config
+from utils.seed import set_global_seed
 
 def main():
     # 1. Load configuration

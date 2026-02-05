@@ -1,9 +1,9 @@
-from pipeline.core.data_loader import DataLoader
-from pipeline.core.preprocessor import Preprocessor
-from pipeline.core.feature_engineer import FeatureEngineer
-from pipeline.core.evaluator import Evaluator
-from pipeline.models.factory import ModelFactory
-from pipeline.utils.artifacts import ArtifactManager
+from core.data_loader import DataLoader
+from core.preprocessor import Preprocessor
+from core.feature_engineer import FeatureEngineer
+from core.evaluator import Evaluator
+from models.factory import ModelFactory
+from utils.artifacts import ArtifactManager
 from pathlib import Path
 import joblib
 
@@ -13,7 +13,6 @@ TEST_PATH  = Path("data/processed/test.joblib")
 
 PREP_PATH  = Path("artifacts/preprocessor.joblib")
 FE_PATH    = Path("artifacts/feature_engineer.joblib")
-
 
 class PipelineController:
   def __init__(self, config: dict):
