@@ -1,0 +1,42 @@
+seed: 42
+
+data:
+  path: data/raw/accidents.csv
+  split:
+    test_size: 0.2
+    val_size: 0.1
+
+features:
+  date_format: %Y-%m-%d %H:%M:%S
+  temporal: Start_Time
+  temporal_features:
+    - minute
+    - hour
+    - dayofweek
+    - month
+  numerical:
+    - Temperature(F)
+    - Visibility(mi)
+    - Wind_Speed(mph)
+    - Precipitation(in)
+  categorical:
+    - Weather_Condition
+    - Junction
+    - Crossing
+    - Traffic_Signal
+  target: severity
+
+models:
+  baseline:
+    type: logistic_regression
+  medium:
+    type: random_forest
+    n_estimators: 200
+  advanced:
+    type: mlp
+    hidden_layers: [128, 64]
+    dropout: 0.3
+
+output:
+  artifacts_dir: artifacts/
+
