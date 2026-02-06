@@ -6,6 +6,8 @@ from core.evaluator import Evaluator
 from pathlib import Path
 import joblib
 import json
+import torch
+from tqdm import tqdm
 
 TRAIN_PATH = Path("data/processed/train.joblib")
 VAL_PATH   = Path("data/processed/val.joblib")
@@ -26,10 +28,13 @@ class PipelineController:
   def __init__(self, config: dict):
     self.config = config
 
+    self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {self.device}")
+
     self.data_loader = DataLoader(config)
     self.preprocessor = Preprocessor(config["features"])
     self.feature_engineer = FeatureEngineer(config["features"])
-    self.model_factory = ModelFactory(config["models"])
+    self.model_factory = ModelFactory(config["models"], self.device)
 
   def load_processed_data(self, force_rebuild: bool = False):
     processed_exists = (
@@ -93,22 +98,31 @@ class PipelineController:
     X_train, X_val, X_test, y_train, y_val, y_test = self.load_processed_data(force_rebuild)
     results = {}
     print(f'Training models...')
-    for model_name in self.model_factory.list_models():
-      model = self.model_factory.create(model_name)
-      print(f'Model {model_name} created')
-      print(f'Training {model_name}...')
-      model.fit(X_train, y_train)
-      print(f'Model {model_name} trained')
+    for model_name in tqdm(self.model_factory.list_models(), desc="Pipeline"):
+      model_path = Path(f"artifacts/models/{model_name}.joblib")
+      if model_path.exists() and not force_rebuild:
+        print(f"Loading existing model: {model_name}...")
+        model = joblib.load(model_path)
+        if hasattr(model, 'torch_model') and model.torch_model is not None:
+          model.device = self.device
+          model.torch_model = model.torch_model.to(self.device)
+      else:
+        model = self.model_factory.create(model_name)
+        print(f'Model {model_name} created')
+        print(f'Training {model_name}...')
+        model.fit(X_train, y_train)
+        print(f'Model {model_name} trained')
+        self.save_model(model, model_name)
+        print(f'Model {model_name} saved')
+
       print(f'Evaluating {model_name}...')
       self.evaluator = Evaluator(model)
       metrics = self.evaluator.evaluate(X_val, y_val)
       print(f'Metrics for {model_name}: {metrics}')
-      self.save_model(model, model_name)
       self.save_metrics(metrics, model_name)
-      print(f'Model {model_name} saved')
+      metrics = self.evaluator.evaluate(X_test, y_test)
+      print(f'Metrics for {model_name}: {metrics}')
+      self.save_metrics(metrics, model_name, split="test")
 
       results[model_name] = metrics
-
-    self.save_summary(results)
-
     return results

@@ -3,8 +3,9 @@ from .random_forest import RandomForestModel
 from .mlp import MLPModel
 
 class ModelFactory:
-  def __init__(self, config: dict):
+  def __init__(self, config: dict, device=None):
     self.config = config
+    self.device = device
 
   def list_models(self):
     """Returns the list of model names defined in the configuration."""
@@ -19,10 +20,10 @@ class ModelFactory:
     model_type = model_conf.pop("type")
 
     if model_type == "logistic_regression":
-      return BaselineModel(**model_conf)
+      return BaselineModel(**model_conf, device=self.device)
     elif model_type == "random_forest":
-      return RandomForestModel(**model_conf)
+      return RandomForestModel(**model_conf, device=self.device)
     elif model_type == "mlp":
-      return MLPModel(**model_conf)
+      return MLPModel(**model_conf, device=self.device)
     else:
       raise ValueError(f"Unknown model type: {model_type}")
