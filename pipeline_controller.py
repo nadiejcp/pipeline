@@ -94,13 +94,19 @@ class PipelineController:
     results = {}
     print(f'Training models...')
     for model_name in self.model_factory.list_models():
-      model = self.model_factory.create(model_name)
-      print(f'Model {model_name} created')
-      print(f'Training {model_name}...')
-      model.fit(X_train, y_train)
-      print(f'Model {model_name} trained')
-      self.save_model(model, model_name)
-      print(f'Model {model_name} saved')
+      model_path = Path(f"artifacts/models/{model_name}.joblib")
+      if model_path.exists() and not force_rebuild:
+        print(f"Loading existing model: {model_name}...")
+        model = joblib.load(model_path)
+      else:
+        model = self.model_factory.create(model_name)
+        print(f'Model {model_name} created')
+        print(f'Training {model_name}...')
+        model.fit(X_train, y_train)
+        print(f'Model {model_name} trained')
+        self.save_model(model, model_name)
+        print(f'Model {model_name} saved')
+
       print(f'Evaluating {model_name}...')
       self.evaluator = Evaluator(model)
       metrics = self.evaluator.evaluate(X_val, y_val)
