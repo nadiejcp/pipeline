@@ -18,7 +18,7 @@ class MLPModel(BaseModel):
     if 'random_state' not in kwargs:
       kwargs['random_state'] = 42
     if 'max_iter' not in kwargs:
-      kwargs['max_iter'] = 500
+      kwargs['max_iter'] = 1500
 
     self.model = MLPClassifier(**kwargs)
 
