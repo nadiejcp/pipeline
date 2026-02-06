@@ -99,16 +99,17 @@ class PipelineController:
       print(f'Training {model_name}...')
       model.fit(X_train, y_train)
       print(f'Model {model_name} trained')
+      self.save_model(model, model_name)
+      print(f'Model {model_name} saved')
       print(f'Evaluating {model_name}...')
       self.evaluator = Evaluator(model)
       metrics = self.evaluator.evaluate(X_val, y_val)
       print(f'Metrics for {model_name}: {metrics}')
-      self.save_model(model, model_name)
       self.save_metrics(metrics, model_name)
-      print(f'Model {model_name} saved')
+      metrics_test = self.evaluator.evaluate(X_test, y_test)
+      self.save_metrics(metrics_test, model_name, split="test")
+      print(f'Metrics for {model_name} saved')
 
       results[model_name] = metrics
-
-    self.save_summary(results)
 
     return results
