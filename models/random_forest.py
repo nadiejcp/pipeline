@@ -6,7 +6,7 @@ class RandomForestModel(BaseModel):
     if 'random_state' not in kwargs:
       kwargs['random_state'] = 42
     if 'max_depth' not in kwargs:
-      kwargs['max_depth'] = 30
+      kwargs['max_depth'] = 20
     if 'n_estimators' not in kwargs:
       kwargs['n_estimators'] = 200
     if 'n_jobs' not in kwargs:
