@@ -92,14 +92,15 @@ class PipelineController:
   def run(self, force_rebuild: bool = False):
     X_train, X_val, X_test, y_train, y_val, y_test = self.load_processed_data(force_rebuild)
     results = {}
+    print(f'Training models...')
     for model_name in self.model_factory.list_models():
-      print(f'Training {model_name}...')
       model = self.model_factory.create(model_name)
       print(f'Model {model_name} created')
+      print(f'Training {model_name}...')
       model.fit(X_train, y_train)
-      print(f'Model {model_name} fitted')
+      print(f'Model {model_name} trained')
+      print(f'Evaluating {model_name}...')
       self.evaluator = Evaluator(model)
-      print(f'Evaluator created for {model_name}')
       metrics = self.evaluator.evaluate(X_val, y_val)
       print(f'Metrics for {model_name}: {metrics}')
       self.save_model(model, model_name)
