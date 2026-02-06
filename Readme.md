@@ -33,6 +33,7 @@ No manual setup is required.
 * The virtual environment is reused on subsequent runs
 * If dependencies change, update `requirements.txt` and re-run `run.bat`
 * Ensure you have the correct python version installed and the data is in the correct format and folder
+* Data can be downloaded from here https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents
 
 ---
 
