@@ -18,13 +18,11 @@ class PipelineController:
   def __init__(self, config: dict):
     self.config = config
 
-    # Core components
     self.data_loader = DataLoader(config["data"])
     self.preprocessor = Preprocessor(config["features"])
     self.feature_engineer = FeatureEngineer(config["features"])
     self.evaluator = Evaluator(config["metrics"])
 
-    # Utilities
     self.model_factory = ModelFactory(config["models"])
     self.artifact_manager = ArtifactManager(config["output"])
 
