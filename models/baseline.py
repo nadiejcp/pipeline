@@ -3,6 +3,7 @@ from .base import BaseModel
 
 class BaselineModel(BaseModel):
   def __init__(self, **kwargs):
+    kwargs.setdefault('max_iter', 1000)
     self.model = LogisticRegression(random_state=42, **kwargs)
 
   def fit(self, X, y):

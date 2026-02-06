@@ -1,11 +1,11 @@
 from core.data_loader import DataLoader
 from core.preprocessor import Preprocessor
 from core.feature_engineer import FeatureEngineer
-from core.evaluator import Evaluator
 from models.factory import ModelFactory
-from utils.artifacts import ArtifactManager
+from core.evaluator import Evaluator
 from pathlib import Path
 import joblib
+import json
 
 TRAIN_PATH = Path("data/processed/train.joblib")
 VAL_PATH   = Path("data/processed/val.joblib")
@@ -14,17 +14,22 @@ TEST_PATH  = Path("data/processed/test.joblib")
 PREP_PATH  = Path("artifacts/preprocessor.joblib")
 FE_PATH    = Path("artifacts/feature_engineer.joblib")
 
+import numpy as np
+
+class NumpyEncoder(json.JSONEncoder):
+  def default(self, obj):
+    if isinstance(obj, np.ndarray):
+      return obj.tolist()
+    return super().default(obj)
+
 class PipelineController:
   def __init__(self, config: dict):
     self.config = config
 
-    self.data_loader = DataLoader(config["data"])
+    self.data_loader = DataLoader(config)
     self.preprocessor = Preprocessor(config["features"])
     self.feature_engineer = FeatureEngineer(config["features"])
-    self.evaluator = Evaluator(config["metrics"])
-
     self.model_factory = ModelFactory(config["models"])
-    self.artifact_manager = ArtifactManager(config["output"])
 
   def load_processed_data(self, force_rebuild: bool = False):
     processed_exists = (
@@ -47,48 +52,62 @@ class PipelineController:
 
     print("Loading raw data...")
     df = self.data_loader.load()
+    print('Data loaded')
     X_train, X_val, X_test, y_train, y_val, y_test = self.data_loader.split(df)
+    print('Data splitted')
 
     X_train = self.feature_engineer.transform(X_train)
     X_val = self.feature_engineer.transform(X_val)
     X_test = self.feature_engineer.transform(X_test)
+    print('Feature engineered')
+
     joblib.dump(self.feature_engineer, "artifacts/feature_engineer.joblib")
 
     self.preprocessor.fit(X_train)
     X_train = self.preprocessor.transform(X_train)
     X_val = self.preprocessor.transform(X_val)
     X_test = self.preprocessor.transform(X_test)
+    print('Preprocessor fitted')
 
     joblib.dump(self.preprocessor, "artifacts/preprocessor.joblib")
 
     joblib.dump((X_train, y_train), "data/processed/train.joblib")
     joblib.dump((X_val, y_val), "data/processed/val.joblib")
     joblib.dump((X_test, y_test), "data/processed/test.joblib")
+    print('Data processed')
 
     return X_train, X_val, X_test, y_train, y_val, y_test
 
+  def save_model(self, model, model_name: str):
+    path = Path(f"artifacts/models/{model_name}.joblib")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, path)
+
+  def save_metrics(self, metrics: dict, model_name: str, split="val"):
+    path = Path(f"artifacts/metrics/{model_name}_{split}.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+      json.dump(metrics, f, indent=2, cls=NumpyEncoder)
+
   def run(self, force_rebuild: bool = False):
     X_train, X_val, X_test, y_train, y_val, y_test = self.load_processed_data(force_rebuild)
-    print("Training models...")
     results = {}
     for model_name in self.model_factory.list_models():
+      print(f'Training {model_name}...')
       model = self.model_factory.create(model_name)
-
+      print(f'Model {model_name} created')
       model.fit(X_train, y_train)
-
-      metrics = self.evaluator.evaluate(
-        model=model,
-        X_val=X_val,
-        y_val=y_val
-      )
-
-      # 6. Save artifacts
-      self.artifact_manager.save_model(model, model_name)
-      self.artifact_manager.save_metrics(metrics, model_name)
+      print(f'Model {model_name} fitted')
+      self.evaluator = Evaluator(model)
+      print(f'Evaluator created for {model_name}')
+      metrics = self.evaluator.evaluate(X_val, y_val)
+      print(f'Metrics for {model_name}: {metrics}')
+      self.save_model(model, model_name)
+      self.save_metrics(metrics, model_name)
+      print(f'Model {model_name} saved')
 
       results[model_name] = metrics
 
-    # 7. Compare models
-    self.artifact_manager.save_summary(results)
+    self.save_summary(results)
 
     return results

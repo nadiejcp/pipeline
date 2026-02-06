@@ -1,8 +1,9 @@
 import pandas as pd
+import numpy as np
 
 class FeatureEngineer:
   def __init__(self, config):
-    self.temporal_features = config["temporal_features"]
+    self.temporal_features = [c for c in config["temporal_features"] if c != "minute"]
     self.periods = {"hour": 24, "month": 12, "dayofweek": 7}
 
   def transform(self, df: pd.DataFrame):

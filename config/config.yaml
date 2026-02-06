@@ -1,13 +1,13 @@
 seed: 42
 
 data:
-  path: data/raw/accidents.csv
+  path: data/raw/US_Accidents_March23.csv
   split:
     test_size: 0.2
     val_size: 0.1
 
 features:
-  date_format: %Y-%m-%d %H:%M:%S
+  date_format: mixed
   temporal: Start_Time
   temporal_features:
     - minute
@@ -24,7 +24,7 @@ features:
     - Junction
     - Crossing
     - Traffic_Signal
-  target: severity
+  target: Severity
 
 models:
   baseline:
