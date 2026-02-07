@@ -92,6 +92,7 @@ class PipelineController:
   def run(self, force_rebuild: bool = False):
     X_train, X_val, X_test, y_train, y_val, y_test = self.load_processed_data(force_rebuild)
     results = {}
+    results_test = {}
     print(f'Training models...')
     for model_name in self.model_factory.list_models():
       model_path = Path(f"artifacts/models/{model_name}.joblib")
@@ -110,12 +111,21 @@ class PipelineController:
       print(f'Evaluating {model_name}...')
       self.evaluator = Evaluator(model)
       metrics = self.evaluator.evaluate(X_val, y_val)
-      print(f'Metrics for {model_name}: {metrics}')
       self.save_metrics(metrics, model_name)
       metrics_test = self.evaluator.evaluate(X_test, y_test)
       self.save_metrics(metrics_test, model_name, split="test")
       print(f'Metrics for {model_name} saved')
 
       results[model_name] = metrics
+      results_test[model_name] = metrics_test
 
-    return results
+    self.show_best_model(results, results_test)
+
+  def show_best_model(self, results: dict, results_test: dict):
+    metrics = ["accuracy", "f1_macro", "f1_weighted"]
+    for metric in metrics:
+      best_model = max(results, key=lambda k: results[k][metric])
+      print(f'Best model for {metric}: {best_model}')
+      print(f'Metrics for {best_model} on validation set: {results[best_model][metric]}')
+      print(f'Metrics for {best_model} on test set: {results_test[best_model][metric]}')
+      print("-" * 100)
