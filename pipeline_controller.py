@@ -125,7 +125,7 @@ class PipelineController:
     metrics = ["accuracy", "f1_macro", "f1_weighted"]
     for metric in metrics:
       best_model = max(results, key=lambda k: results[k][metric])
-      print(f'Best model for {metric}: {best_model}')
+      print(f'Best model using {metric} metric: {best_model}')
       print(f'Metrics for {best_model} on validation set: {results[best_model][metric]}')
       print(f'Metrics for {best_model} on test set: {results_test[best_model][metric]}')
       print("-" * 100)
