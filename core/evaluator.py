@@ -15,10 +15,10 @@ class Evaluator:
     results = {
       "split": split_name,
       "accuracy": accuracy_score(y, y_pred),
-      "f1_macro": f1_score(y, y_pred, average="macro"),
-      "f1_weighted": f1_score(y, y_pred, average="weighted"),
+      "f1_macro": f1_score(y, y_pred, average="macro", zero_division=0),
+      "f1_weighted": f1_score(y, y_pred, average="weighted", zero_division=0),
       "confusion_matrix": confusion_matrix(y, y_pred),
-      "classification_report": classification_report(y, y_pred, output_dict=True),
+      "classification_report": classification_report(y, y_pred, output_dict=True, zero_division=0),
     }
 
     return results
